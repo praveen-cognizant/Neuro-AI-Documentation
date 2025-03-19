@@ -1,0 +1,945 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2818
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Menlo-BoldItalic;\f2\fnil\fcharset0 Menlo-Bold;
+\f3\fnil\fcharset0 Menlo-Italic;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red153\green153\blue153;\red47\green180\blue29;
+\red64\green11\blue217;\red171\green223\blue228;\red180\green36\blue25;\red159\green160\blue28;\red46\green174\blue187;
+\red111\green111\blue111;}
+{\*\expandedcolortbl;;\csgray\c0;\csgenericrgb\c60000\c60000\c60000;\cssrgb\c20241\c73898\c14950;
+\cssrgb\c32309\c18666\c88229;\csgenericrgb\c67157\c87278\c89373;\cssrgb\c76411\c21697\c12527;\cssrgb\c68469\c68012\c14211;\cssrgb\c20199\c73241\c78251;
+\cssrgb\c51167\c51167\c51167;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0  
+\f1\i\b \ul Building an Agents Framework from Scratch: Complete Guide
+\f0\i0\b0 \ulnone \
+\
+  
+\f2\b 1. Core Architecture
+\f0\b0 \
+\
+  Here's a detailed implementation of the core components necessary for building a hierarchical agent framework from scratch.\
+\
+  \cf3 Framework Structure\cf2 \
+\
+  agents
+\f3\i _framework/
+\f0\i0 \
+  
+\f3\i \uc0\u9500 \u9472 \u9472  core/
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  
+\f1\b __init__
+\f3\b0 .py
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  agent.py                # Base agent implementation
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  tool.py                 # Tool interface
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  registry.py             # Component registry
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9492 \u9472 \u9472  message.py              # Message types
+\f0\i0 \
+  
+\f3\i \uc0\u9500 \u9472 \u9472  config/
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  
+\f1\b __init__
+\f3\b0 .py
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  loader.py               # HOCON configuration loader
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9492 \u9472 \u9472  parser.py               # Configuration parser
+\f0\i0 \
+  
+\f3\i \uc0\u9500 \u9472 \u9472  runtime/
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  
+\f1\b __init__
+\f3\b0 .py
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  server.py               # Agent server
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9500 \u9472 \u9472  client.py               # Web client
+\f0\i0 \
+  
+\f3\i \uc0\u9474    \u9492 \u9472 \u9472  runner.py               # System runner
+\f0\i0 \
+  
+\f3\i \uc0\u9492 \u9472 \u9472  tools/
+\f0\i0 \
+  
+\f3\i     \uc0\u9500 \u9472 \u9472  
+\f1\b __init__
+\f3\b0 .py
+\f0\i0 \
+  
+\f3\i     \uc0\u9492 \u9472 \u9472  implementations/        # Built-in tool implementations
+\f0\i0 \
+\
+  
+\f2\b 2. Base Agent Implementation
+\f0\b0 \
+\
+  \cf4 # core/agent.py\cf2 \
+  \cf5 from\cf2  enum \cf5 import\cf2  Enum\
+  \cf5 from\cf2  typing \cf5 import\cf2  \cf6 List\cf2 , \cf6 Dict\cf2 , \cf6 Any\cf2 , \cf6 Optional\cf2 , \cf6 Union\cf2 \
+\
+  \cf5 class InquiryMode(Enum):\cf2 \
+      \cf7 """Modes an agent can operate in when processing an inquiry."""\cf2 \
+      RESPONSIBILITY = \cf7 "responsibility"\cf2   \cf4 # Determine if agent can handle inquiry\cf2 \
+      REQUIREMENTS = \cf7 "requirements"\cf2       \cf4 # Identify information needed\cf2 \
+      RESPONSE = \cf7 "response"\cf2               \cf4 # Generate full response\cf2 \
+\
+  \cf5 class Agent:\cf2 \
+      \cf7 """Base agent class that can process inquiries and delegate to subagents."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self, name: \cf9 str\cf8 , instructions: \cf9 str\cf8 , tools: \cf6 List\cf8 [\cf9 str\cf8 ] = \cf5 None\cf8 ):\cf2 \
+          \cf7 """Initialize the agent.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             name: Agent name and identifier\cf2 \
+  \cf7             instructions: Agent instructions/prompt\cf2 \
+  \cf7             tools: List of tool names this agent can access\cf2 \
+  \cf7         """\cf2 \
+          self.name = name\
+          self.instructions = instructions\
+          self.tool_names = tools \cf5 or\cf2  []\
+          self.tools = \{\}  \cf4 # Will be populated by registry\cf2 \
+          self.subagents = \{\}  \cf4 # Will be populated by registry\cf2 \
+\
+      \cf5 def\cf8  process_inquiry(self, inquiry: \cf9 str\cf8 , mode: InquiryMode, \cf2 \
+  \cf8                         context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ] = \cf5 None\cf8 ) -> \cf6 Union\cf8 [\cf9 str\cf8 , \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]]:\cf2 \
+          \cf7 """Process an inquiry based on the specified mode.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             inquiry: The user's question or request\cf2 \
+  \cf7             mode: How the agent should process the inquiry\cf2 \
+  \cf7             context: Additional context for processing\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Response string or structured data based on mode\cf2 \
+  \cf7         """\cf2 \
+          context = context \cf5 or\cf2  \{\}\
+\
+          \cf5 if\cf2  mode == InquiryMode.RESPONSIBILITY:\
+              \cf5 return\cf2  self._check_responsibility(inquiry, context)\
+          \cf5 elif\cf2  mode == InquiryMode.REQUIREMENTS:\
+              \cf5 return\cf2  self._gather_requirements(inquiry, context)\
+          \cf5 elif\cf2  mode == InquiryMode.RESPONSE:\
+              \cf5 return\cf2  self._generate_response(inquiry, context)\
+          \cf5 else\cf2 :\
+              \cf5 return\cf2  \cf7 f"Error: Unknown mode \{mode\}"\cf2 \
+\
+      \cf5 def\cf8  _check_responsibility(self, inquiry: \cf9 str\cf8 , context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]:\cf2 \
+          \cf7 """Determine if this agent can handle the inquiry.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Dict with "can_handle" (bool) and "confidence" (float) \cf2 \
+  \cf7         """\cf2 \
+          \cf4 # Construct prompt using agent instructions and inquiry\cf2 \
+          prompt = self._build_prompt(\
+              \cf7 f"Can you handle this inquiry: \{inquiry\}?"\cf2 ,\
+              context\
+          )\
+\
+          \cf4 # Get LLM response using prompt\cf2 \
+          response = self._call_llm(prompt)\
+\
+          \cf4 # Also check if any subagents can handle it\cf2 \
+          subagent_responses = \{\}\
+          \cf5 for\cf2  name, subagent \cf5 in\cf2  self.subagents.items():\
+              subagent_responses[name] = subagent._check_responsibility(inquiry, context)\
+\
+          \cf4 # Analyze which subagents can help\cf2 \
+          relevant_subagents = [\
+              name \cf5 for\cf2  name, resp \cf5 in\cf2  subagent_responses.items()\
+              \cf5 if\cf2  resp.get(\cf7 "can_handle"\cf2 , \cf5 False\cf2 )\
+          ]\
+\
+          \cf5 return\cf2  \{\
+              \cf7 "can_handle"\cf2 : \cf5 True\cf2  \cf5 if\cf2  relevant_subagents \cf5 else\cf2  \cf5 False\cf2 ,\
+              \cf7 "confidence"\cf2 : \cf4 0.8\cf2  \cf5 if\cf2  relevant_subagents \cf5 else\cf2  \cf4 0.1\cf2 ,\
+              \cf7 "relevant_subagents"\cf2 : relevant_subagents\
+          \}\
+\
+      \cf5 def\cf8  _gather_requirements(self, inquiry: \cf9 str\cf8 , context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]:\cf2 \
+          \cf7 """Determine what information is needed to respond.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Dict with "required_info" list\cf2 \
+  \cf7         """\cf2 \
+          \cf4 # Ask subagents what they need\cf2 \
+          requirements = \{\}\
+          \cf5 for\cf2  name, subagent \cf5 in\cf2  self.subagents.items():\
+              \cf5 if\cf2  name \cf5 in\cf2  context.get(\cf7 "relevant_subagents"\cf2 , []):\
+                  requirements[name] = subagent._gather_requirements(inquiry, context)\
+\
+          \cf4 # Compile and deduplicate requirements\cf2 \
+          all_requirements = []\
+          \cf5 for\cf2  subagent_reqs \cf5 in\cf2  requirements.values():\
+              \cf5 for\cf2  req \cf5 in\cf2  subagent_reqs.get(\cf7 "required_info"\cf2 , []):\
+                  \cf5 if\cf2  req \cf5 not\cf2  \cf5 in\cf2  all_requirements:\
+                      all_requirements.append(req)\
+\
+          \cf5 return\cf2  \{\cf7 "required_info"\cf2 : all_requirements\}\
+\
+      \cf5 def\cf8  _generate_response(self, inquiry: \cf9 str\cf8 , context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf9 str\cf8 :\cf2 \
+          \cf7 """Generate a response to the inquiry.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Response string\cf2 \
+  \cf7         """\cf2 \
+          \cf4 # Delegate to relevant subagents\cf2 \
+          subagent_responses = \{\}\
+          \cf5 for\cf2  name, subagent \cf5 in\cf2  self.subagents.items():\
+              \cf5 if\cf2  name \cf5 in\cf2  context.get(\cf7 "relevant_subagents"\cf2 , []):\
+                  subagent_responses[name] = subagent._generate_response(inquiry, context)\
+\
+          \cf4 # Combine responses from subagents\cf2 \
+          combined_response = self._combine_responses(inquiry, subagent_responses, context)\
+          \cf5 return\cf2  combined_response\
+\
+      \cf5 def\cf8  _build_prompt(self, task: \cf9 str\cf8 , context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf9 str\cf8 :\cf2 \
+          \cf7 """Build a prompt for the LLM incorporating instructions and context."""\cf2 \
+          prompt = \cf7 f"You are \{self.name\}.\\n\\n\{self.instructions\}\\n\\n"\cf2 \
+          prompt += \cf7 f"Task: \{task\}\\n\\n"\cf2 \
+\
+          \cf4 # Add relevant context\cf2 \
+          \cf5 if\cf2  context:\
+              prompt += \cf7 "Context:\\n"\cf2 \
+              \cf5 for\cf2  key, value \cf5 in\cf2  context.items():\
+                  \cf5 if\cf2  key != \cf7 "relevant_subagents"\cf2 :  \cf4 # Skip internal tracking info\cf2 \
+                      prompt += \cf7 f"- \{key\}: \{value\}\\n"\cf2 \
+\
+          \cf5 return\cf2  prompt\
+\
+      \cf5 def\cf8  _call_llm(self, prompt: \cf9 str\cf8 ) -> \cf9 str\cf8 :\cf2 \
+          \cf7 """Call the LLM with the given prompt."""\cf2 \
+          \cf4 # This would call your LLM of choice (OpenAI, Anthropic, etc.)\cf2 \
+          \cf4 # For example with OpenAI:\cf2 \
+          \cf4 # response = openai.ChatCompletion.create(\cf2 \
+          \cf4 #     model="gpt-4", \cf2 \
+          \cf4 #     messages=[\{"role": "system", "content": prompt\}]\cf2 \
+          \cf4 # )\cf2 \
+          \cf4 # return response.choices[0].message.content\cf2 \
+\
+          \cf4 # Mock implementation for example:\cf2 \
+          \cf5 return\cf2  \cf7 f"[LLM response for \{self.name\}]"\cf2 \
+\
+      \cf5 def\cf8  _combine_responses(self, inquiry: \cf9 str\cf8 , subagent_responses: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf9 str\cf8 ], \cf2 \
+  \cf8                          context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf9 str\cf8 :\cf2 \
+          \cf7 """Combine multiple subagent responses into a coherent answer."""\cf2 \
+          \cf5 if\cf2  \cf5 not\cf2  subagent_responses:\
+              \cf5 return\cf2  \cf7 "I don't have enough information to answer this question."\cf2 \
+\
+          \cf4 # Build prompt for response combination\cf2 \
+          prompt = self._build_prompt(\
+              \cf7 f"Combine these specialist responses into a cohesive answer for: \{inquiry\}"\cf2 ,\
+              context\
+          )\
+\
+          \cf4 # Add each subagent's response\cf2 \
+          prompt += \cf7 "Specialist responses:\\n"\cf2 \
+          \cf5 for\cf2  name, response \cf5 in\cf2  subagent_responses.items():\
+              prompt += \cf7 f"--- \{name\} ---\\n\{response\}\\n\\n"\cf2 \
+\
+          \cf4 # Get final response from LLM\cf2 \
+          \cf5 return\cf2  self._call_llm(prompt)\
+\
+      \cf5 def\cf8  invoke_tool(self, tool_name: \cf9 str\cf8 , args: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf6 Any\cf8 :\cf2 \
+          \cf7 """Invoke a tool by name with the given arguments."""\cf2 \
+          \cf5 if\cf2  tool_name \cf5 not\cf2  \cf5 in\cf2  self.tools:\
+              \cf5 return\cf2  \cf7 f"Error: Tool \{tool_name\} not available to this agent"\cf2 \
+\
+          tool = self.tools[tool_name]\
+          \cf5 return\cf2  tool.invoke(args)\
+\
+  
+\f2\b 3. Tool Interface Implementation
+\f0\b0 \
+\
+  \cf4 # core/tool.py\cf2 \
+  \cf5 from\cf2  abc \cf5 import\cf2  ABC, abstractmethod\
+  \cf5 from\cf2  typing \cf5 import\cf2  \cf6 Dict\cf2 , \cf6 Any\cf2 , \cf6 Union\cf2 \
+\
+  \cf5 class Tool(ABC):\cf2 \
+      \cf7 """Abstract base class for all tools."""\cf2 \
+\
+  \cf10     @abstractmethod\cf2 \
+      \cf5 def\cf8  invoke(self, args: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ], context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ] = \cf5 None\cf8 ) -> \cf6 Union\cf8 [\cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ], \cf9 str\cf8 ]:\cf2 \
+          \cf7 """Execute the tool functionality.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             args: Tool-specific arguments\cf2 \
+  \cf7             context: Additional context (optional)\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Result data or error message\cf2 \
+  \cf7         """\cf2 \
+          \cf5 pass\cf2 \
+\
+  \cf5 class PDFExtractor(Tool):\cf2 \
+      \cf7 """Tool implementation for extracting text from PDFs."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self, document_paths: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf9 str\cf8 ] = \cf5 None\cf8 ):\cf2 \
+          \cf7 """Initialize the PDF extractor.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             document_paths: Mapping of domain names to document directories\cf2 \
+  \cf7         """\cf2 \
+          self.document_paths = document_paths \cf5 or\cf2  \{\}\
+\
+      \cf5 def\cf8  invoke(self, args: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ], context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ] = \cf5 None\cf8 ) -> \cf6 Union\cf8 [\cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ], \cf9 str\cf8 ]:\cf2 \
+          \cf7 """Extract text from PDFs based on the domain.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             args: Must contain "domain" key specifying which documents to extract\cf2 \
+  \cf7             context: Additional context (unused)\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Dict with extracted text or error message\cf2 \
+  \cf7         """\cf2 \
+          domain = args.get(\cf7 "domain"\cf2 )\
+          \cf5 if\cf2  \cf5 not\cf2  domain:\
+              \cf5 return\cf2  \cf7 "Error: No domain specified"\cf2 \
+\
+          \cf5 if\cf2  domain \cf5 not\cf2  \cf5 in\cf2  self.document_paths:\
+              \cf5 return\cf2  \cf7 f"Error: No documents found for domain \{domain\}"\cf2 \
+\
+          document_dir = self.document_paths[domain]\
+\
+          \cf4 # In a real implementation, this would:\cf2 \
+          \cf4 # 1. Find all PDFs in the directory\cf2 \
+          \cf4 # 2. Extract text from each\cf2 \
+          \cf4 # 3. Return as structured data\cf2 \
+\
+          \cf4 # Mock implementation for example:\cf2 \
+          \cf5 return\cf2  \{\
+              \cf7 "files"\cf2 : \{\
+                  \cf7 f"\{domain\}_document1.pdf"\cf2 : \cf7 f"[Extracted text from \{domain\} document 1]"\cf2 ,\
+                  \cf7 f"\{domain\}_document2.pdf"\cf2 : \cf7 f"[Extracted text from \{domain\} document 2]"\cf2 \
+              \}\
+          \}\
+\
+  \cf5 class URLProvider(Tool):\cf2 \
+      \cf7 """Tool implementation for providing URLs."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self, url_mapping: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf9 str\cf8 ] = \cf5 None\cf8 ):\cf2 \
+          \cf7 """Initialize the URL provider.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             url_mapping: Mapping of resource names to URLs\cf2 \
+  \cf7         """\cf2 \
+          self.url_mapping = url_mapping \cf5 or\cf2  \{\}\
+\
+      \cf5 def\cf8  invoke(self, args: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ], context: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ] = \cf5 None\cf8 ) -> \cf6 Union\cf8 [\cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ], \cf9 str\cf8 ]:\cf2 \
+          \cf7 """Get URL for the specified resource.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             args: Must contain "resource" key specifying which URL to retrieve\cf2 \
+  \cf7             context: Additional context (unused)\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             URL string or error message\cf2 \
+  \cf7         """\cf2 \
+          resource = args.get(\cf7 "resource"\cf2 )\
+          \cf5 if\cf2  \cf5 not\cf2  resource:\
+              \cf5 return\cf2  \cf7 "Error: No resource specified"\cf2 \
+\
+          \cf5 if\cf2  resource \cf5 not\cf2  \cf5 in\cf2  self.url_mapping:\
+              \cf5 return\cf2  \cf7 f"Error: No URL found for resource \{resource\}"\cf2 \
+\
+          \cf5 return\cf2  self.url_mapping[resource]\
+\
+  
+\f2\b 4. Registry Implementation
+\f0\b0 \
+\
+  \cf4 # core/registry.py\cf2 \
+  \cf5 from\cf2  typing \cf5 import\cf2  \cf6 Dict\cf2 , \cf6 Any\cf2 , \cf6 Type\cf2 , \cf6 Optional\cf2 \
+  \cf5 from\cf2  .agent \cf5 import\cf2  Agent\
+  \cf5 from\cf2  .tool \cf5 import\cf2  Tool\
+\
+  \cf5 class Registry:\cf2 \
+      \cf7 """Registry for all system components (agents and tools)."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self):\cf2 \
+          \cf7 """Initialize the registry."""\cf2 \
+          self.agents: \cf6 Dict\cf2 [\cf9 str\cf2 , Agent] = \{\}\
+          self.tools: \cf6 Dict\cf2 [\cf9 str\cf2 , Tool] = \{\}\
+          self.tool_classes: \cf6 Dict\cf2 [\cf9 str\cf2 , \cf6 Type\cf2 [Tool]] = \{\}\
+\
+      \cf5 def\cf8  register_agent(self, agent: Agent) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Register an agent in the registry.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             agent: The agent to register\cf2 \
+  \cf7         """\cf2 \
+          self.agents[agent.name] = agent\
+\
+      \cf5 def\cf8  register_tool(self, name: \cf9 str\cf8 , tool: Tool) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Register a tool instance in the registry.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             name: The tool name\cf2 \
+  \cf7             tool: The tool instance\cf2 \
+  \cf7         """\cf2 \
+          self.tools[name] = tool\
+\
+      \cf5 def\cf8  register_tool_class(self, name: \cf9 str\cf8 , tool_class: \cf6 Type\cf8 [Tool]) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Register a tool class in the registry.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             name: The tool class name\cf2 \
+  \cf7             tool_class: The tool class\cf2 \
+  \cf7         """\cf2 \
+          self.tool_classes[name] = tool_class\
+\
+      \cf5 def\cf8  get_agent(self, name: \cf9 str\cf8 ) -> \cf6 Optional\cf8 [Agent]:\cf2 \
+          \cf7 """Get an agent by name.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             name: The agent name\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             The agent or None if not found\cf2 \
+  \cf7         """\cf2 \
+          \cf5 return\cf2  self.agents.get(name)\
+\
+      \cf5 def\cf8  get_tool(self, name: \cf9 str\cf8 ) -> \cf6 Optional\cf8 [Tool]:\cf2 \
+          \cf7 """Get a tool by name.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             name: The tool name\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             The tool or None if not found\cf2 \
+  \cf7         """\cf2 \
+          \cf5 return\cf2  self.tools.get(name)\
+\
+      \cf5 def\cf8  instantiate_tool(self, name: \cf9 str\cf8 , config: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf6 Optional\cf8 [Tool]:\cf2 \
+          \cf7 """Instantiate a tool from its class.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             name: The tool class name\cf2 \
+  \cf7             config: The tool configuration\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             The tool instance or None if class not found\cf2 \
+  \cf7         """\cf2 \
+          tool_class = self.tool_classes.get(name)\
+          \cf5 if\cf2  \cf5 not\cf2  tool_class:\
+              \cf5 return\cf2  \cf5 None\cf2 \
+\
+          \cf5 return\cf2  tool_class(**config)\
+\
+      \cf5 def\cf8  link_agents(self) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Link all agents to their subagents and tools."""\cf2 \
+          \cf5 for\cf2  agent_name, agent \cf5 in\cf2  self.agents.items():\
+              \cf4 # Link subagents\cf2 \
+              \cf5 for\cf2  tool_name \cf5 in\cf2  agent.tool_names:\
+                  \cf5 if\cf2  tool_name \cf5 in\cf2  self.agents:\
+                      agent.subagents[tool_name] = self.agents[tool_name]\
+                  \cf5 elif\cf2  tool_name \cf5 in\cf2  self.tools:\
+                      agent.tools[tool_name] = self.tools[tool_name]\
+\
+  
+\f2\b 5. Configuration System
+\f0\b0 \
+\
+  \cf4 # config/loader.py\cf2 \
+  \cf5 import\cf2  json\
+  \cf5 import\cf2  os\
+  \cf5 from\cf2  typing \cf5 import\cf2  \cf6 Dict\cf2 , \cf6 Any\cf2 , \cf6 List\cf2 , \cf6 Tuple\cf2 \
+  \cf5 from\cf2  ..core.agent \cf5 import\cf2  Agent\
+  \cf5 from\cf2  ..core.registry \cf5 import\cf2  Registry\
+\
+  \cf5 class ConfigLoader:\cf2 \
+      \cf7 """Loader for HOCON configuration files."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self, registry: Registry):\cf2 \
+          \cf7 """Initialize the loader.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             registry: The component registry\cf2 \
+  \cf7         """\cf2 \
+          self.registry = registry\
+\
+      \cf5 def\cf8  load_config(self, config_path: \cf9 str\cf8 ) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Load configuration from a file.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             config_path: Path to the configuration file\cf2 \
+  \cf7         """\cf2 \
+          \cf4 # In a real implementation, this would use a HOCON parser\cf2 \
+          \cf4 # For simplicity, we'll use JSON in this example\cf2 \
+          \cf5 with\cf2  \cf9 open\cf2 (config_path, \cf7 'r'\cf2 ) \cf5 as\cf2  f:\
+              config = json.load(f)\
+\
+          \cf4 # Load LLM config\cf2 \
+          llm_config = config.get(\cf7 "llm_config"\cf2 , \{\})\
+          \cf4 # Configure LLM here...\cf2 \
+\
+          \cf4 # Load common definitions\cf2 \
+          common_defs = config.get(\cf7 "commondefs"\cf2 , \{\})\
+\
+          \cf4 # Load tools and agents\cf2 \
+          tools = config.get(\cf7 "tools"\cf2 , [])\
+          self._load_tools_and_agents(tools, common_defs)\
+\
+          \cf4 # Link agents together\cf2 \
+          self.registry.link_agents()\
+\
+      \cf5 def\cf8  _load_tools_and_agents(self, tools: \cf6 List\cf8 [\cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]], \cf2 \
+  \cf8                                common_defs: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Load tools and agents from configuration.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             tools: List of tool/agent configurations\cf2 \
+  \cf7             common_defs: Common definitions to apply\cf2 \
+  \cf7         """\cf2 \
+          \cf4 # First pass: register all agents and tools\cf2 \
+          \cf5 for\cf2  tool_config \cf5 in\cf2  tools:\
+              name = tool_config.get(\cf7 "name"\cf2 )\
+              \cf5 if\cf2  \cf5 not\cf2  name:\
+                  \cf5 continue\cf2 \
+\
+              \cf4 # Check if this is a tool implementation or an agent\cf2 \
+              \cf5 if\cf2  \cf7 "class"\cf2  \cf5 in\cf2  tool_config:\
+                  \cf4 # This is a tool implementation\cf2 \
+                  class_path = tool_config[\cf7 "class"\cf2 ]\
+                  tool_instance = self._instantiate_tool(class_path, tool_config)\
+                  \cf5 if\cf2  tool_instance:\
+                      self.registry.register_tool(name, tool_instance)\
+              \cf5 else\cf2 :\
+                  \cf4 # This is an agent\cf2 \
+                  instructions = self._apply_common_defs(\
+                      tool_config.get(\cf7 "instructions"\cf2 , \cf7 ""\cf2 ),\
+                      common_defs\
+                  )\
+\
+                  agent = Agent(\
+                      name=name,\
+                      instructions=instructions,\
+                      tools=tool_config.get(\cf7 "tools"\cf2 , [])\
+                  )\
+\
+                  self.registry.register_agent(agent)\
+\
+      \cf5 def\cf8  _instantiate_tool(self, class_path: \cf9 str\cf8 , \cf2 \
+  \cf8                            config: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf6 Any\cf8 :\cf2 \
+          \cf7 """Instantiate a tool from its class path.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             class_path: Module and class name\cf2 \
+  \cf7             config: Tool configuration\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Tool instance or None if failed\cf2 \
+  \cf7         """\cf2 \
+          \cf5 try\cf2 :\
+              module_name, class_name = class_path.rsplit(\cf7 '.'\cf2 , \cf4 1\cf2 )\
+              module = \cf9 __import__\cf2 (module_name, fromlist=[class_name])\
+              cls = \cf9 getattr\cf2 (module, class_name)\
+              \cf5 return\cf2  cls()\
+          \cf5 except\cf2  (ImportError, AttributeError, ValueError) \cf5 as\cf2  e:\
+              \cf9 print\cf2 (\cf7 f"Error loading tool class \{class_path\}: \{e\}"\cf2 )\
+              \cf5 return\cf2  \cf5 None\cf2 \
+\
+      \cf5 def\cf8  _apply_common_defs(self, text: \cf9 str\cf8 , common_defs: \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]) -> \cf9 str\cf8 :\cf2 \
+          \cf7 """Apply common definitions to a text.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             text: The text to process\cf2 \
+  \cf7             common_defs: Common definitions to apply\cf2 \
+  \cf7             \cf2 \
+  \cf7         Returns:\cf2 \
+  \cf7             Processed text\cf2 \
+  \cf7         """\cf2 \
+          \cf4 # Replace string placeholders\cf2 \
+          \cf5 for\cf2  key, value \cf5 in\cf2  common_defs.get(\cf7 "replacement_strings"\cf2 , \{\}).items():\
+              placeholder = \cf7 f"\{\{\{key\}\}\}"\cf2 \
+              text = text.replace(placeholder, value)\
+\
+          \cf5 return\cf2  text\
+\
+  
+\f2\b 6. Runtime System
+\f0\b0 \
+\
+  \cf4 # runtime/runner.py\cf2 \
+  \cf5 import\cf2  argparse\
+  \cf5 import\cf2  os\
+  \cf5 import\cf2  signal\
+  \cf5 import\cf2  subprocess\
+  \cf5 import\cf2  sys\
+  \cf5 from\cf2  typing \cf5 import\cf2  \cf6 Dict\cf2 , \cf6 Any\cf2 \
+\
+  \cf5 class Runner:\cf2 \
+      \cf7 """Runner for the agent framework."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self):\cf2 \
+          \cf7 """Initialize the runner."""\cf2 \
+          \cf4 # Default Configuration\cf2 \
+          self.server_host = \cf7 "localhost"\cf2 \
+          self.server_port = \cf4 8000\cf2 \
+          self.web_client_port = \cf4 8080\cf2 \
+          self.agent_name = \cf7 "main_agent"\cf2 \
+\
+          \cf4 # Parse command-line arguments\cf2 \
+          self.config = self.parse_args()\
+\
+          \cf4 # Process references\cf2 \
+          self.server_process = \cf5 None\cf2 \
+          self.client_process = \cf5 None\cf2 \
+\
+      \cf5 def\cf8  parse_args(self) -> \cf6 Dict\cf8 [\cf9 str\cf8 , \cf6 Any\cf8 ]:\cf2 \
+          \cf7 """Parse command-line arguments."""\cf2 \
+          parser = argparse.ArgumentParser(description=\cf7 "Run the agent framework."\cf2 )\
+\
+          parser.add_argument(\cf7 '--server-host'\cf2 , \cf9 type\cf2 =\cf9 str\cf2 , default=self.server_host,\
+                             \cf9 help\cf2 =\cf7 "Host address for the server"\cf2 )\
+          parser.add_argument(\cf7 '--server-port'\cf2 , \cf9 type\cf2 =\cf9 int\cf2 , default=self.server_port,\
+                             \cf9 help\cf2 =\cf7 "Port number for the server"\cf2 )\
+          parser.add_argument(\cf7 '--web-client-port'\cf2 , \cf9 type\cf2 =\cf9 int\cf2 , default=self.web_client_port,\
+                             \cf9 help\cf2 =\cf7 "Port number for the web client"\cf2 )\
+          parser.add_argument(\cf7 '--agent-name'\cf2 , \cf9 type\cf2 =\cf9 str\cf2 , default=self.agent_name,\
+                             \cf9 help\cf2 =\cf7 "Name of the top-level agent"\cf2 )\
+          parser.add_argument(\cf7 '--config-file'\cf2 , \cf9 type\cf2 =\cf9 str\cf2 , required=\cf5 True\cf2 ,\
+                             \cf9 help\cf2 =\cf7 "Path to the configuration file"\cf2 )\
+\
+          \cf5 return\cf2  \cf9 vars\cf2 (parser.parse_args())\
+\
+      \cf5 def\cf8  set_environment_variables(self) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Set required environment variables."""\cf2 \
+          os.environ[\cf7 "PYTHONPATH"\cf2 ] = os.getcwd()\
+          os.environ[\cf7 "AGENT_CONFIG_FILE"\cf2 ] = self.config[\cf7 "config_file"\cf2 ]\
+\
+          \cf9 print\cf2 (\cf7 f"PYTHONPATH set to: \{os.environ['PYTHONPATH']\}"\cf2 )\
+          \cf9 print\cf2 (\cf7 f"AGENT_CONFIG_FILE set to: \{os.environ['AGENT_CONFIG_FILE']\}"\cf2 )\
+\
+      \cf5 def\cf8  start_server(self) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Start the agent server."""\cf2 \
+          server_command = [\
+              sys.executable, \cf7 "-m"\cf2 , \cf7 "agents_framework.runtime.server"\cf2 ,\
+              \cf7 "--port"\cf2 , \cf9 str\cf2 (self.config[\cf7 "server_port"\cf2 ])\
+          ]\
+\
+          self.server_process = subprocess.Popen(\
+              server_command,\
+              stdout=subprocess.PIPE,\
+              stderr=subprocess.PIPE,\
+              text=\cf5 True\cf2 \
+          )\
+\
+          \cf9 print\cf2 (\cf7 f"Started server on port \{self.config['server_port']\}"\cf2 )\
+\
+      \cf5 def\cf8  start_client(self) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Start the web client."""\cf2 \
+          client_command = [\
+              sys.executable, \cf7 "-m"\cf2 , \cf7 "agents_framework.runtime.client"\cf2 ,\
+              \cf7 "--server-host"\cf2 , self.config[\cf7 "server_host"\cf2 ],\
+              \cf7 "--server-port"\cf2 , \cf9 str\cf2 (self.config[\cf7 "server_port"\cf2 ]),\
+              \cf7 "--web-client-port"\cf2 , \cf9 str\cf2 (self.config[\cf7 "web_client_port"\cf2 ]),\
+              \cf7 "--agent-name"\cf2 , self.config[\cf7 "agent_name"\cf2 ]\
+          ]\
+\
+          self.client_process = subprocess.Popen(\
+              client_command,\
+              stdout=subprocess.PIPE,\
+              stderr=subprocess.PIPE,\
+              text=\cf5 True\cf2 \
+          )\
+\
+          \cf9 print\cf2 (\cf7 f"Started web client on port \{self.config['web_client_port']\}"\cf2 )\
+\
+      \cf5 def\cf8  signal_handler(self, signum, frame) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Handle termination signals."""\cf2 \
+          \cf9 print\cf2 (\cf7 "\\nTermination signal received. Stopping all processes..."\cf2 )\
+\
+          \cf5 if\cf2  self.server_process:\
+              self.server_process.terminate()\
+\
+          \cf5 if\cf2  self.client_process:\
+              self.client_process.terminate()\
+\
+          sys.exit(\cf4 0\cf2 )\
+\
+      \cf5 def\cf8  run(self) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Run the agent framework."""\cf2 \
+          \cf4 # Set environment variables\cf2 \
+          self.set_environment_variables()\
+\
+          \cf4 # Set up signal handling\cf2 \
+          signal.signal(signal.SIGINT, self.signal_handler)  \cf4 # Handle Ctrl+C\cf2 \
+          signal.signal(signal.SIGTERM, self.signal_handler)  \cf4 # Handle kill\cf2 \
+\
+          \cf4 # Start server and client\cf2 \
+          self.start_server()\
+          self.start_client()\
+\
+          \cf4 # Wait for both processes\cf2 \
+          self.server_process.wait()\
+          self.client_process.wait()\
+\
+  
+\f2\b 7. Server Implementation
+\f0\b0 \
+\
+  \cf4 # runtime/server.py\cf2 \
+  \cf5 import\cf2  argparse\
+  \cf5 from\cf2  typing \cf5 import\cf2  \cf6 Dict\cf2 , \cf6 Any\cf2 \
+  \cf5 import\cf2  http.server\
+  \cf5 import\cf2  json\
+  \cf5 import\cf2  socketserver\
+  \cf5 from\cf2  ..core.agent \cf5 import\cf2  Agent, InquiryMode\
+  \cf5 from\cf2  ..core.registry \cf5 import\cf2  Registry\
+  \cf5 from\cf2  ..config.loader \cf5 import\cf2  ConfigLoader\
+\
+  \cf5 class AgentServer:\cf2 \
+      \cf7 """Server for handling agent requests."""\cf2 \
+\
+      \cf5 def\cf8  __init__(self, port: \cf9 int\cf8  = \cf4 8000\cf8 ):\cf2 \
+          \cf7 """Initialize the server.\cf2 \
+  \cf7         \cf2 \
+  \cf7         Args:\cf2 \
+  \cf7             port: The port to listen on\cf2 \
+  \cf7         """\cf2 \
+          self.port = port\
+          self.registry = Registry()\
+          self.config_file = os.environ.get(\cf7 "AGENT_CONFIG_FILE"\cf2 )\
+\
+          \cf4 # Load configuration\cf2 \
+          \cf5 if\cf2  self.config_file:\
+              loader = ConfigLoader(self.registry)\
+              loader.load_config(self.config_file)\
+\
+      \cf5 def\cf8  start(self) -> \cf5 None\cf8 :\cf2 \
+          \cf7 """Start the server."""\cf2 \
+          \cf5 class AgentRequestHandler(http.server.BaseHTTPRequestHandler):\cf2 \
+              registry = self.registry\
+\
+              \cf5 def\cf8  do_POST(self):\cf2 \
+                  content_length = \cf9 int\cf2 (self.headers[\cf7 'Content-Length'\cf2 ])\
+                  post_data = self.rfile.read(content_length).decode(\cf7 'utf-8'\cf2 )\
+                  request = json.loads(post_data)\
+\
+                  agent_name = request.get(\cf7 "agent"\cf2 , \cf7 "main_agent"\cf2 )\
+                  inquiry = request.get(\cf7 "inquiry"\cf2 , \cf7 ""\cf2 )\
+                  mode = request.get(\cf7 "mode"\cf2 , \cf7 "response"\cf2 )\
+                  context = request.get(\cf7 "context"\cf2 , \{\})\
+\
+                  \cf4 # Find the agent\cf2 \
+                  agent = self.registry.get_agent(agent_name)\
+                  \cf5 if\cf2  \cf5 not\cf2  agent:\
+                      self.send_error(\cf4 404\cf2 , \cf7 f"Agent \{agent_name\} not found"\cf2 )\
+                      \cf5 return\cf2 \
+\
+                  \cf4 # Process the inquiry\cf2 \
+                  \cf5 try\cf2 :\
+                      \cf5 if\cf2  mode == \cf7 "responsibility"\cf2 :\
+                          result = agent.process_inquiry(inquiry, InquiryMode.RESPONSIBILITY, context)\
+                      \cf5 elif\cf2  mode == \cf7 "requirements"\cf2 :\
+                          result = agent.process_inquiry(inquiry, InquiryMode.REQUIREMENTS, context)\
+                      \cf5 else\cf2 :\
+                          result = agent.process_inquiry(inquiry, InquiryMode.RESPONSE, context)\
+\
+                      \cf4 # Send response\cf2 \
+                      self.send_response(\cf4 200\cf2 )\
+                      self.send_header(\cf7 'Content-type'\cf2 , \cf7 'application/json'\cf2 )\
+                      self.end_headers()\
+                      self.wfile.write(json.dumps(\{\cf7 "result"\cf2 : result\}).encode())\
+                  \cf5 except\cf2  Exception \cf5 as\cf2  e:\
+                      self.send_error(\cf4 500\cf2 , \cf9 str\cf2 (e))\
+\
+          \cf4 # Start HTTP server\cf2 \
+          \cf5 with\cf2  socketserver.TCPServer((\cf7 ""\cf2 , self.port), AgentRequestHandler) \cf5 as\cf2  httpd:\
+              \cf9 print\cf2 (\cf7 f"Server running on port \{self.port\}"\cf2 )\
+              httpd.serve_forever()\
+\
+  \cf5 def\cf8  main():\cf2 \
+      parser = argparse.ArgumentParser(description=\cf7 "Run the agent server."\cf2 )\
+      parser.add_argument(\cf7 '--port'\cf2 , \cf9 type\cf2 =\cf9 int\cf2 , default=\cf4 8000\cf2 , \cf9 help\cf2 =\cf7 "Port to listen on"\cf2 )\
+      args = parser.parse_args()\
+\
+      server = AgentServer(port=args.port)\
+      server.start()\
+\
+  \cf5 if\cf2  __name__ == \cf7 "__main__"\cf2 :\
+      main()\
+\
+  
+\f2\b 8. Example HOCON Configuration
+\f0\b0 \
+\
+  \{\
+      "llm_config": \{\
+          "model_name": "gpt-4",\
+          "temperature": 0.7,\
+          "verbose": true\
+      \},\
+      "commondefs": \{\
+          "replacement_strings": \{\
+              "instructions_prefix": """\
+              You are part of a customer service system for an airline company.\
+              Only answer inquiries that are directly within your area of expertise.\
+              Do not try to help for personal matters.\
+              """,\
+              "agent_instructions": """\
+              When you receive an inquiry, you will:\
+              1. Determine if you can handle it\
+              2. Identify requirements to fulfill the inquiry\
+              3. Generate a comprehensive response\
+\
+              You may collaborate with other agents in the system.\
+              """\
+          \}\
+      \},\
+      "tools": [\
+          \{\
+              "name": "Airline Assistant",\
+              "function": \{\
+                  "description": "Top-level airline assistant that handles all customer inquiries"\
+              \},\
+              "instructions": """\
+              \{instructions_prefix\}\
+              You are the top-level agent for airline customer service.\
+              \{agent_instructions\}\
+              When interacting with users, provide clear and concise responses.\
+              Include relevant URLs when appropriate.\
+              """,\
+              "tools": ["Baggage_Agent", "Flight_Agent", "International_Agent"]\
+          \},\
+          \{\
+              "name": "Baggage_Agent",\
+              "function": "agent_call",\
+              "instructions": """\
+              \{instructions_prefix\}\
+              You specialize in baggage policies and issues.\
+              \{agent_instructions\}\
+              """,\
+              "tools": ["PDFExtractor", "URLProvider"]\
+          \},\
+          \{\
+              "name": "Flight_Agent",\
+              "function": "agent_call",\
+              "instructions": """\
+              \{instructions_prefix\}\
+              You specialize in flight information and bookings.\
+              \{agent_instructions\}\
+              """,\
+              "tools": ["PDFExtractor", "URLProvider"]\
+          \},\
+          \{\
+              "name": "International_Agent",\
+              "function": "agent_call",\
+              "instructions": """\
+              \{instructions_prefix\}\
+              You specialize in international travel requirements.\
+              \{agent_instructions\}\
+              """,\
+              "tools": ["PDFExtractor", "URLProvider"]\
+          \},\
+          \{\
+              "name": "PDFExtractor",\
+              "function": \{\
+                  "description": "Extracts text from PDF documents",\
+                  "parameters": \{\
+                      "type": "object",\
+                      "properties": \{\
+                          "domain": \{\
+                              "type": "string",\
+                              "description": "The domain to extract documents for"\
+                          \}\
+                      \},\
+                      "required": ["domain"]\
+                  \}\
+              \},\
+              "class": "tools.implementations.pdf_extractor.PDFExtractor"\
+          \},\
+          \{\
+              "name": "URLProvider",\
+              "function": \{\
+                  "description": "Provides URLs for airline resources",\
+                  "parameters": \{\
+                      "type": "object",\
+                      "properties": \{\
+                          "resource": \{\
+                              "type": "string",\
+                              "description": "The resource to get URL for"\
+                          \}\
+                      \},\
+                      "required": ["resource"]\
+                  \}\
+              \},\
+              "class": "tools.implementations.url_provider.URLProvider"\
+          \}\
+      ]\
+  \}\
+\
+  
+\f2\b 9. Usage Example
+\f0\b0 \
+\
+  Here's how to use the framework to build an airline helpdesk application:\
+\
+  \cf4 # Example usage\cf2 \
+  \cf5 from\cf2  agents_framework.core.registry \cf5 import\cf2  Registry\
+  \cf5 from\cf2  agents_framework.config.loader \cf5 import\cf2  ConfigLoader\
+  \cf5 from\cf2  agents_framework.runtime.runner \cf5 import\cf2  Runner\
+\
+  \cf4 # 1. Initialize the system\cf2 \
+  registry = Registry()\
+  loader = ConfigLoader(registry)\
+\
+  \cf4 # 2. Load configuration\cf2 \
+  loader.load_config(\cf7 "config/airline_helpdesk.hocon"\cf2 )\
+\
+  \cf4 # 3. Create the main runner\cf2 \
+  runner = Runner()\
+\
+  \cf4 # 4. Start the system\cf2 \
+  runner.run()\
+\
+  
+\f2\b 10. Key Design Patterns
+\f0\b0 \
+\
+  1. 
+\f2\b Hierarchical Delegation Pattern
+\f0\b0 :\
+    - Top-level agents delegate to specialized sub-agents\
+    - Each agent focuses on a specific domain\
+    - Responses flow back up the hierarchy\
+  2. 
+\f2\b Tool Interface Pattern
+\f0\b0 :\
+    - All tools implement a common interface\
+    - Agents interact with tools through standardized method calls\
+    - Tools encapsulate complex functionality\
+  3. 
+\f2\b Configuration-Driven Architecture
+\f0\b0 :\
+    - System behavior defined by configuration files\
+    - No code changes needed to modify agent hierarchy\
+    - Runtime component assembly from configuration\
+  4. 
+\f2\b Three-Phase Inquiry Processing
+\f0\b0 :\
+    - Responsibility determination\
+    - Requirements gathering\
+    - Response generation\
+\
+  This architectural pattern enables building complex agent systems with minimal code while maintaining flexibility and extensibility.}

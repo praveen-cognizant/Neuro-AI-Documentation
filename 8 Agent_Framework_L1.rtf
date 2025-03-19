@@ -1,0 +1,187 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2818
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-BoldItalic;\f1\fnil\fcharset0 Menlo-Regular;\f2\fnil\fcharset0 Menlo-Bold;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red153\green153\blue153;\red64\green11\blue217;
+\red159\green160\blue28;\red180\green36\blue25;\red47\green180\blue29;}
+{\*\expandedcolortbl;;\csgray\c0;\csgenericrgb\c60000\c60000\c60000;\cssrgb\c32309\c18666\c88229;
+\cssrgb\c68469\c68012\c14211;\cssrgb\c76411\c21697\c12527;\cssrgb\c20241\c73898\c14950;}
+\margl1440\margr1440\vieww34360\viewh18700\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\i\b\fs22 \cf2 \ul \ulc2 \CocoaLigature0 Building an Agent Framework: Core Architecture
+\f1\i0\b0 \ulnone \
+\
+  
+\f2\b 1. Framework Foundation
+\f1\b0 \
+\
+  \cf3 Libraries and Dependencies\cf2 \
+\
+  - The framework uses 
+\f2\b Python
+\f1\b0  as its base language\
+  - Relies on several key libraries:\
+    - 
+\f2\b PyPDF2
+\f1\b0  for PDF text extraction\
+    - 
+\f2\b HOCON
+\f1\b0  (Human-Optimized Config Object Notation) for configuration\
+    - A web interface using Flask or similar (via \cf4 neuro_san_web_client\cf2 )\
+    - LLM integration (supports GPT-4o as seen in configs)\
+\
+  \cf3 Core Components Architecture\cf2 \
+\
+  Framework\
+  \uc0\u9500 \u9472 \u9472  Agent System\
+  \uc0\u9474    \u9500 \u9472 \u9472  Base Agent Class\
+  \uc0\u9474    \u9500 \u9472 \u9472  Agent Hierarchy Manager\
+  \uc0\u9474    \u9492 \u9472 \u9472  Message Routing System\
+  \uc0\u9500 \u9472 \u9472  Tool System\
+  \uc0\u9474    \u9500 \u9472 \u9472  Tool Interface (CodedTool)\
+  \uc0\u9474    \u9500 \u9472 \u9472  Tool Registry\
+  \uc0\u9474    \u9492 \u9472 \u9472  Tool Implementations\
+  \uc0\u9500 \u9472 \u9472  Configuration System\
+  \uc0\u9474    \u9500 \u9472 \u9472  HOCON Parser\
+  \uc0\u9474    \u9500 \u9472 \u9472  Agent Definition Loader\
+  \uc0\u9474    \u9492 \u9472 \u9472  Environment Configuration\
+  \uc0\u9492 \u9472 \u9472  Runtime System\
+      \uc0\u9500 \u9472 \u9472  Server Component\
+      \uc0\u9500 \u9472 \u9472  Web Interface\
+      \uc0\u9492 \u9472 \u9472  Logging System\
+\
+  
+\f2\b 2. Agent System Implementation
+\f1\b0 \
+\
+  \cf3 Base Agent Class\cf2 \
+\
+  \cf4 class Agent:\cf2 \
+      \cf4 def\cf5  __init__(self, name, instructions, tools=\cf4 None\cf5 ):\cf2 \
+          self.name = name\
+          self.instructions = instructions\
+          self.tools = tools \cf4 or\cf2  []\
+\
+      \cf4 def\cf5  process_inquiry(self, inquiry, mode):\cf2 \
+          \cf6 """Process an inquiry in one of three modes:\cf2 \
+  \cf6            - responsibility: determine if agent can handle inquiry\cf2 \
+  \cf6            - requirements: determine what information is needed\cf2 \
+  \cf6            - response: generate a response to the inquiry\cf2 \
+  \cf6         """\cf2 \
+          \cf7 # Implementation details...\cf2 \
+\
+      \cf4 def\cf5  _delegate_to_subagents(self, inquiry):\cf2 \
+          \cf6 """Route inquiry to appropriate subagents"""\cf2 \
+          \cf7 # Implementation details...\cf2 \
+\
+  \cf3 Agent Hierarchy Manager\cf2 \
+\
+  - Handles parent-child relationships between agents\
+  - Maintains agent registry for lookup by name\
+  - Handles message passing between agents\
+\
+  
+\f2\b 3. Tool System Implementation
+\f1\b0 \
+\
+  \cf3 Tool Interface\cf2 \
+\
+  \cf4 class CodedTool:\cf2 \
+      \cf6 """Base class for all tool implementations"""\cf2 \
+\
+      \cf4 def\cf5  invoke(self, args, sly_data):\cf2 \
+          \cf6 """Execute the tool functionality\cf2 \
+  \cf6         \cf2 \
+  \cf6         Args:\cf2 \
+  \cf6             args: Tool-specific arguments\cf2 \
+  \cf6             sly_data: Out-of-band data not shown to user\cf2 \
+  \cf6             \cf2 \
+  \cf6         Returns:\cf2 \
+  \cf6             Result data or error message\cf2 \
+  \cf6         """\cf2 \
+          \cf4 raise\cf2  NotImplementedError(\cf6 "Tool must implement invoke method"\cf2 )\
+\
+  \cf3 Tool Registry\cf2 \
+\
+  - Central registry where tools are registered\
+  - Allows tools to be looked up by name\
+  - Handles tool instantiation from configuration\
+\
+  
+\f2\b 4. Configuration System
+\f1\b0 \
+\
+  \cf3 HOCON Configuration\cf2 \
+\
+  - Uses a hierarchical structure to define:\
+    - Agents and their relationships\
+    - Tool definitions and implementations\
+    - System-wide settings\
+    - Common definitions/instructions\
+\
+  \cf3 Configuration Loading\cf2 \
+\
+  \cf4 def\cf5  load_agent_hierarchy(config_path):\cf2 \
+      \cf6 """Load agent definitions from HOCON files\cf2 \
+  \cf6     \cf2 \
+  \cf6     Args:\cf2 \
+  \cf6         config_path: Path to main configuration file\cf2 \
+  \cf6         \cf2 \
+  \cf6     Returns:\cf2 \
+  \cf6         Top-level agent with full hierarchy constructed\cf2 \
+  \cf6     """\cf2 \
+      \cf7 # Parse HOCON file\cf2 \
+      \cf7 # Instantiate tools\cf2 \
+      \cf7 # Create agent instances\cf2 \
+      \cf7 # Build agent hierarchy\cf2 \
+      \cf7 # Return top-level agent\cf2 \
+\
+  
+\f2\b 5. Runtime System
+\f1\b0 \
+\
+  \cf3 Main Execution Loop\cf2 \
+\
+  \cf4 def\cf5  agent_main_loop(port):\cf2 \
+      \cf6 """Start the agent server and process inquiries\cf2 \
+  \cf6     \cf2 \
+  \cf6     Args:\cf2 \
+  \cf6         port: Port to listen on\cf2 \
+  \cf6     """\cf2 \
+      \cf7 # Load configuration\cf2 \
+      \cf7 # Initialize top-level agent\cf2 \
+      \cf7 # Start server to receive inquiries\cf2 \
+      \cf7 # For each inquiry:\cf2 \
+      \cf7 #   - Route to top-level agent\cf2 \
+      \cf7 #   - Process through agent hierarchy\cf2 \
+      \cf7 #   - Return response\cf2 \
+\
+  \cf3 Runner Implementation\cf2 \
+\
+  - Handles process management (server & web client)\
+  - Sets environment variables\
+  - Manages logging\
+  - Handles termination signals\
+\
+  
+\f2\b 6. Message Flow Architecture
+\f1\b0 \
+\
+  The framework uses a structured message flow pattern:\
+  1. 
+\f2\b Inquiry Determination
+\f1\b0 : Identify which agents can handle the inquiry\
+  2. 
+\f2\b Requirements Collection
+\f1\b0 : Gather needed information from user/tools\
+  3. 
+\f2\b Delegation
+\f1\b0 : Route inquiry to specialized agents\
+  4. 
+\f2\b Response Generation
+\f1\b0 : Process inquiry with available information\
+  5. 
+\f2\b Response Compilation
+\f1\b0 : Combine responses from multiple agents\
+\
+  This pattern enables complex distributed reasoning across specialized agents.}
