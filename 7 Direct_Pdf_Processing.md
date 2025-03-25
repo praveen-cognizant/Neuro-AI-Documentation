@@ -1,6 +1,6 @@
 # Direct PDF Processing vs. Vector Databases
 
-This document explains how the Airline Helpdesk Chatbot processes PDF documents at runtime without using vector embeddings or a vector database.
+This document explains how the Airline Helpdesk Chatbot processes PDF documents at runtime without using vector embeddings or a vector database. They are not mutually exclusive and can be used mixed together
 
 ## Overview: Two Different Approaches to Document Retrieval
 
