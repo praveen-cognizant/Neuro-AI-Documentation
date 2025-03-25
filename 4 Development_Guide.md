@@ -1,6 +1,6 @@
 # Airline Helpdesk Development Guide
 
-This guide outlines the development process and structure of the Airline Helpdesk Chatbot system.
+This guide outlines the development process and structure of the Airline Helpdesk Chatbot system. In this example, reading PDF or text files is just a quick way to “ground” the agent into a company’s policies. For more complex us case you might want to implement a RAG tool that delegates to a RAG agent for instance.
 
 ## Development Sequence
 
