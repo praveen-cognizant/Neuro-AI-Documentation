@@ -21,8 +21,7 @@
                                                                ▼
                                                    ┌───────────────────────┐
                                                    │                       │
-                                                   │  Domain Selection     │
-                                                   │  Process              │
+                                                   │  Broadcast to all sub agents             │
                                                    │                       │
                                                    └──┬──────────┬─────────┘
                                                       │          │
